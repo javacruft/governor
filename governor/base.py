@@ -6,43 +6,14 @@
 from juju.controller import Controller
 from ops.charm import CharmBase, EventBase, ObjectEvents, EventSource
 from ops.framework import StoredState, Object
-from .governor_storage import GovernorStorage
+from .storage import GovernorStorage
+from .events import GovernorEvents
 
 import os
 import logging
 import yaml
 import sys
 import subprocess
-
-
-def interrupt():
-    sys.exit()
-
-
-class UnitEvent(EventBase):
-    def __init__(self, handle, unit_name):
-        super().__init__(handle)
-
-        self.unit_name = unit_name
-
-    def snapshot(self):
-        return {"unit_name": self.unit_name}
-
-    def restore(self, snapshot):
-        self.unit_name = snapshot["unit_name"]
-
-
-class UnitAddedEvent(UnitEvent):
-    pass
-
-
-class UnitRemovedEvent(UnitEvent):
-    pass
-
-
-class GovernorEvents(ObjectEvents):
-    unitadded = EventSource(UnitAddedEvent)
-    unitremoved = EventSource(UnitRemovedEvent)
 
 
 class GovernorEventHandler(Object):
@@ -90,16 +61,6 @@ class GovernorBase(CharmBase):
             raise Exception("Failed to find model {}".format(model_name))
 
         self.state.set_default(model_name=model_name)
-        self.framework.observe(self.geh.on.unitadded, self.on_unitadded)
-        self.framework.observe(self.geh.on.unitremoved, self.on_unitremoved)
-
-    def on_unitadded(self, event):
-        self.framework.breakpoint()
-        logging.debug("Unit Added Event called")
-
-    def on_unitremoved(self, event):
-        self.framework.breakpoint()
-        logging.debug("Unit Removed Event called")
 
     def start_governord(self):
         model_name = self.state.model_name
