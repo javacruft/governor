@@ -74,13 +74,16 @@ class GovernorBase(CharmBase):
         with open("/home/ubuntu/creds.yaml", "w") as creds_file:
             creds_file.write(yaml.dump(creds))
 
+        open("/home/ubuntu/gs_db", "w").close()
+
         logging.debug("current dir: {}".format(os.getcwd()))
-        subprocess.Popen(
-            ["nohup", "./daemon"],
-            stdout=open("/dev/null", "w"),
-            stderr=open("logfile.log", "a"),
-            preexec_fn=os.setpgrp,
-        )
+        subprocess.run(["apt", "install", "docker.io", "-y"], check=True)
+
+        subprocess.run(["docker", "run", "-d", "-v",
+                        "/home/ubuntu/creds.yaml:/usr/share/broker/creds.yaml",
+                        "-v", "/home/ubuntu/gs_db:/usr/share/broker/gs_db",
+                        "-t", "domfleischmann/governor-broker:latest"],
+                       check=True)
 
     def connected(f):
         async def wrapper(*args):
