@@ -22,7 +22,7 @@ class GovernorEventHandler(Object):
     def __init__(self, charm, name):
         super().__init__(charm, name)
         events = charm.on
-        self.gs = GovernorStorage("/home/ubuntu/gs_db")
+        self.gs = GovernorStorage("/usr/share/broker/gs_db")
         self.framework.observe(
             events.governorevent_action, self.on_governorevent_action
         )
@@ -54,6 +54,9 @@ class GovernorBase(CharmBase):
     def __init__(self, *args):
         super().__init__(*args)
 
+        if not os.path.isdir("/usr/share/broker"):
+            os.mkdir("/usr/share/broker")
+
         self.geh = GovernorEventHandler(self, "geh")
 
         model_name = os.environ["JUJU_MODEL_NAME"] or None
@@ -71,19 +74,15 @@ class GovernorBase(CharmBase):
             "cacert": self.model.config["juju_controller_cacert"],
             "model": model_name,
         }
-        with open("/home/ubuntu/creds.yaml", "w") as creds_file:
+        with open("/usr/share/broker/creds.yaml", "w") as creds_file:
             creds_file.write(yaml.dump(creds))
 
-        open("/home/ubuntu/gs_db", "w").close()
+        open("/usr/share/broker/gs_db", "w").close()
 
         logging.debug("current dir: {}".format(os.getcwd()))
-        subprocess.run(["apt", "install", "docker.io", "-y"], check=True)
+        snap_path = self.model.resources.fetch("governor-broker")
 
-        subprocess.run(["docker", "run", "-d", "-v",
-                        "/home/ubuntu/creds.yaml:/usr/share/broker/creds.yaml",
-                        "-v", "/home/ubuntu/gs_db:/usr/share/broker/gs_db",
-                        "-t", "domfleischmann/governor-broker:latest"],
-                       check=True)
+        subprocess.run(["snap", "install", snap_path, "--classic", "--dangerous"], check=True)
 
     def connected(f):
         async def wrapper(*args):
