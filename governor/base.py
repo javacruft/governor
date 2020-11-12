@@ -22,7 +22,7 @@ class GovernorEventHandler(Object):
     def __init__(self, charm, name):
         super().__init__(charm, name)
         events = charm.on
-        self.gs = GovernorStorage("/usr/share/broker/gs_db")
+        self.gs = GovernorStorage("/var/snap/governor-broker/common/gs_db")
         self.framework.observe(
             events.governorevent_action, self.on_governorevent_action
         )
@@ -53,9 +53,8 @@ class GovernorBase(CharmBase):
 
     def __init__(self, *args):
         super().__init__(*args)
-
-        if not os.path.isdir("/usr/share/broker"):
-            os.mkdir("/usr/share/broker")
+        if not os.path.isdir("/var/snap/governor-broker/common"):
+            os.makedirs("/var/snap/governor-broker/common")
 
         self.geh = GovernorEventHandler(self, "geh")
 
@@ -74,15 +73,14 @@ class GovernorBase(CharmBase):
             "cacert": self.model.config["juju_controller_cacert"],
             "model": model_name,
         }
-        with open("/usr/share/broker/creds.yaml", "w") as creds_file:
+        with open("/var/snap/governor-broker/common/creds.yaml", "w") as creds_file:
             creds_file.write(yaml.dump(creds))
 
-        open("/usr/share/broker/gs_db", "w").close()
+        open("/var/snap/governor-broker/common/gs_db", "w").close()
 
         logging.debug("current dir: {}".format(os.getcwd()))
-        snap_path = self.model.resources.fetch("governor-broker")
 
-        subprocess.run(["snap", "install", snap_path, "--classic", "--dangerous"], check=True)
+        subprocess.run(["snap", "install", "governor-broker"], check=True)
 
     def connected(f):
         async def wrapper(*args):
