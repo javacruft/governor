@@ -23,7 +23,9 @@ class JujuConnection:
 
         self.model = await self.ctrl.get_model(model)
 
-    def set_config(self, application, **kwargs):
+    def set_config(self, app_name, **kwargs):
+        application = self.model.applications[app_name]
+
         loop.run(application.set_config(**kwargs))
 
     def execute_action(self, application_name, action_name, **kwargs):
