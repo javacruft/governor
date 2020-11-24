@@ -23,6 +23,6 @@ class UnitRemovedEvent(UnitEvent):
 
 
 class GovernorEvents(ObjectEvents):
-    unitadded = EventSource(UnitAddedEvent)
-    unitremoved = EventSource(UnitRemovedEvent)
+    unit_added = EventSource(UnitAddedEvent)
+    unit_removed = EventSource(UnitRemovedEvent)
 

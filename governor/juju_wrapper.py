@@ -25,15 +25,8 @@ class JujuConnection:
 
         self.model = await self.ctrl.get_model(model)
 
-    def model_execute(self, method, **kwargs):
-        function = getattr(self.model, method)
-
-        loop.run(function(**kwargs))
-
-    def application_execute(self, application, method, **kwargs):
-        function = getattr(application, method)
-
-        loop.run(function(**kwargs))
+    def set_config(self, application, **kwargs):
+        loop.run(application.set_config(**kwargs))
 
     def execute_action(self, application_name, action_name, **kwargs):
         loop.run(self._execute_action(application_name, action_name, **kwargs))
@@ -53,7 +46,7 @@ class JujuConnection:
     def deploy(self, **kwargs):
         loop.run(self.model.deploy(**kwargs))
 
-    def wait_for_deployment_to_settle(self, charm_name):
+    def wait_for_deployment_to_settle(self, charm_name, allowed_workload_status=["active"]):
         loop.run(self._wait_for_deployment_to_settle(charm_name))
 
     async def _wait_for_deployment_to_settle(self, charm_name, allowed_workload_status=["active"]):

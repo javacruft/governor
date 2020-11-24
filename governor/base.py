@@ -24,10 +24,10 @@ class GovernorEventHandler(Object):
         events = charm.on
         self.gs = GovernorStorage("/var/snap/governor-broker/common/gs_db")
         self.framework.observe(
-            events.governorevent_action, self.on_governorevent_action
+            events.governor_event_action, self.on_governor_event_action
         )
 
-    def on_governorevent_action(self, event):
+    def on_governor_event_action(self, event):
         self.process_governor_events()
 
     def process_governor_events(self):
@@ -38,8 +38,8 @@ class GovernorEventHandler(Object):
 
     def emit_governor_event(self, event_data):
         event_switcher = {
-            "unitadded": self.on.unitadded.emit,
-            "unitremoved": self.on.unitremoved.emit,
+            "unit_added": self.on.unit_added.emit,
+            "unit_removed": self.on.unit_removed.emit,
         }
 
         func = event_switcher.get(event_data["event_name"],
