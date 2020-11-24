@@ -2,40 +2,48 @@
 #
 # (c) 2020 Canonical Ltd. All right reservered
 #
+import os
+import subprocess
+import yaml
+
 from .juju_wrapper import JujuConnection
-from juju.controller import Controller
 from ops.charm import CharmBase
 from ops.framework import StoredState, Object
 from .storage import GovernorStorage
 from .events import GovernorEvents
 
-import os
-import logging
-import yaml
-import subprocess
-
 
 class GovernorEventHandler(Object):
+    """
+    Governor Event Handler
+
+    Class in charge of reacting to governor-event action, reading event data
+    from Governor Storage and emmiting correct Governor Event.
+    """
+
     on = GovernorEvents()
 
     def __init__(self, charm, name):
         super().__init__(charm, name)
         events = charm.on
-        self.gs = GovernorStorage("/var/snap/governor-broker/common/gs_db")
+        self.storage = GovernorStorage("/var/snap/governor-broker/common/gs_db")
         self.framework.observe(
             events.governor_event_action, self.on_governor_event_action
         )
 
     def on_governor_event_action(self, event):
+        """ React to action and start Processing Governor Events. """
         self.process_governor_events()
 
     def process_governor_events(self):
-        events_data = self.gs.read_all_event_data()
+        """ Read Events from Storage. """
+        events_data = self.storage.read_all_event_data()
 
         for event_data in events_data:
             self.emit_governor_event(event_data)
 
     def emit_governor_event(self, event_data):
+        """ Map event data to governor events and emit it. """
         event_switcher = {
             "unit_added": self.on.unit_added.emit,
             "unit_removed": self.on.unit_removed.emit,
@@ -49,6 +57,12 @@ class GovernorEventHandler(Object):
 
 
 class GovernorBase(CharmBase):
+    """
+    GovernorBase
+
+    Base class for all Governor Charms.
+    """
+
     state = StoredState()
 
     def __init__(self, *args):
@@ -76,6 +90,7 @@ class GovernorBase(CharmBase):
             self.juju = None
 
     def start_governord(self):
+        """ Create creds.yaml and starting Governor Broker. """
         model_name = self.state.model_name
         creds = {
             "endpoint": self.model.config["juju_controller_address"],
@@ -90,11 +105,10 @@ class GovernorBase(CharmBase):
 
         open("/var/snap/governor-broker/common/gs_db", "w").close()
 
-        logging.debug("current dir: {}".format(os.getcwd()))
-
         subprocess.run(["snap", "install", "governor-broker"], check=True)
 
     def creds_available(self):
+        """ Check if Juju credentials are available. """
         addr = self.model.config["juju_controller_address"]
         if len(addr) == 0:
             addr = os.environ["JUJU_API_ADDRESSES"].split(" ")[0]
@@ -105,29 +119,3 @@ class GovernorBase(CharmBase):
         return not (
             len(addr) == 0 or len(user) == 0 or len(password) == 0 or len(cacert) == 0
         )
-
-    def connected(f):
-        async def wrapper(*args):
-            ctrl, model = await args[0].connect_juju_components()
-            result = await f(*args, ctrl, model)
-            await args[0].disconnect_juju_components(ctrl, model)
-            return result
-
-        return wrapper
-
-    async def connect_juju_components(self):
-        ctrl = Controller()
-        await ctrl.connect(
-            endpoint=self.model.config["juju_controller_address"],
-            username=self.model.config["juju_controller_user"],
-            password=self.model.config["juju_controller_password"],
-            cacert=self.model.config["juju_controller_cacert"],
-        )
-
-        model = await ctrl.get_model(self.state.model_name)
-
-        return ctrl, model
-
-    async def disconnect_juju_components(self, model, ctrl):
-        await model.disconnect()
-        await ctrl.disconnect()

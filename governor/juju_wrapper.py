@@ -1,10 +1,17 @@
+import asyncio
+
 from juju.controller import Controller
 from juju import loop
 from ops.model import ModelError
-import asyncio
 
 
 class JujuConnection:
+    """
+    Juju Connection Class
+
+    Class in charge of communicating with Juju through Libjuju in a Synchronous way.
+    """
+
     def __init__(self, endpoint, username, password, cacert, model):
         loop.run(
             self.connect_juju_components(endpoint, username, password, cacert, model)
@@ -13,6 +20,7 @@ class JujuConnection:
     async def connect_juju_components(
         self, endpoint, username, password, cacert, model
     ):
+        """ Connect to Juju controller and Juju Model. """
         self.ctrl = Controller()
         await self.ctrl.connect(
             endpoint=endpoint,
@@ -24,14 +32,17 @@ class JujuConnection:
         self.model = await self.ctrl.get_model(model)
 
     def set_config(self, app_name, **kwargs):
+        """ Call application.set_config. """
         application = self.model.applications[app_name]
 
         loop.run(application.set_config(**kwargs))
 
     def execute_action(self, application_name, action_name, **kwargs):
+        """ Execute Action synchronously. """
         loop.run(self._execute_action(application_name, action_name, **kwargs))
 
     async def _execute_action(self, application_name, action_name, **kwargs):
+        """ Execute Action on Leader unit of Application name. """
         if (
             not self.model.applications
             and application_name not in self.model.applications
@@ -47,16 +58,22 @@ class JujuConnection:
         await unit.run_action(action_name, **kwargs)
 
     def deploy(self, **kwargs):
+        """ Call model.deploy. """
         loop.run(self.model.deploy(**kwargs))
 
     def wait_for_deployment_to_settle(
         self, charm_name, allowed_workload_status=["active"]
     ):
+        """ Wait for deployment to settle synchronously. """
         loop.run(self._wait_for_deployment_to_settle(charm_name))
 
     async def _wait_for_deployment_to_settle(
         self, charm_name, allowed_workload_status=["active"]
     ):
+        """
+        Wait for deployment to settle to allowed workload status and ignore status of
+        charm_name.
+        """
         try:
             filtered_apps = []
             for name in self.model.applications:

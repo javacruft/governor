@@ -4,6 +4,12 @@ import pickle
 
 
 class GovernorStorage:
+    """
+    Governor Storage
+
+    Class for shared Storage between Governor Charm (Governor Event Handler) and
+    Governor Broker.
+    """
 
     DB_LOCK_TIMEOUT = timedelta(hours=1)
 
@@ -18,14 +24,15 @@ class GovernorStorage:
         self._setup()
 
     def _setup(self):
+        """ Setup sqlite database. """
         # Make sure that the database is locked until the connection is closed,
         # not until the transaction ends.
         self._db.execute("PRAGMA locking_mode=EXCLUSIVE")
-        c = self._db.execute("BEGIN")
-        c.execute(
+        cursor = self._db.execute("BEGIN")
+        cursor.execute(
             "SELECT count(name) FROM sqlite_master WHERE type='table' AND name='governor'"
         )
-        if c.fetchone()[0] == 0:
+        if cursor.fetchone()[0] == 0:
             # Keep in mind what might happen if the process dies somewhere below.
             # The system must not be rendered permanently broken by that.
             self._db.execute(
@@ -34,6 +41,7 @@ class GovernorStorage:
             self._db.commit()
 
     def write_event_data(self, data):
+        """ Write event data with timestamp. """
         raw_data = pickle.dumps(data)
         self._db.execute(
             "REPLACE INTO governor VALUES (datetime('now'), ?)", (raw_data,)
@@ -41,9 +49,10 @@ class GovernorStorage:
         self._db.commit()
 
     def read_all_event_data(self):
-        c = self._db.cursor()
-        c.execute("SELECT data FROM governor ORDER BY timestamp ASC")
-        raw_rows = c.fetchall()
+        """ Read all events ordered by timestamp and delete from storage. """
+        cursor = self._db.cursor()
+        cursor.execute("SELECT data FROM governor ORDER BY timestamp ASC")
+        raw_rows = cursor.fetchall()
 
         rows = []
 
@@ -56,4 +65,5 @@ class GovernorStorage:
         return rows
 
     def close(self):
+        """ Close Database. """
         self._db.close()
