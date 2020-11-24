@@ -4,7 +4,7 @@
 #
 from .juju_wrapper import JujuConnection
 from juju.controller import Controller
-from ops.charm import CharmBase, EventBase, ObjectEvents, EventSource
+from ops.charm import CharmBase
 from ops.framework import StoredState, Object
 from .storage import GovernorStorage
 from .events import GovernorEvents
@@ -12,7 +12,6 @@ from .events import GovernorEvents
 import os
 import logging
 import yaml
-import sys
 import subprocess
 
 
@@ -42,8 +41,9 @@ class GovernorEventHandler(Object):
             "unit_removed": self.on.unit_removed.emit,
         }
 
-        func = event_switcher.get(event_data["event_name"],
-                                  lambda: "Invalid event data")
+        func = event_switcher.get(
+            event_data["event_name"], lambda: "Invalid event data"
+        )
 
         func(event_data["event_data"])
 
@@ -70,10 +70,10 @@ class GovernorBase(CharmBase):
                 self.model.config["juju_controller_user"],
                 self.model.config["juju_controller_password"],
                 self.model.config["juju_controller_cacert"],
-                self.state.model_name,)
+                self.state.model_name,
+            )
         else:
             self.juju = None
-
 
     def start_governord(self):
         model_name = self.state.model_name
@@ -95,16 +95,17 @@ class GovernorBase(CharmBase):
         subprocess.run(["snap", "install", "governor-broker"], check=True)
 
     def creds_available(self):
-        addr = self.model.config['juju_controller_address']
+        addr = self.model.config["juju_controller_address"]
         if len(addr) == 0:
-            addr = os.environ['JUJU_API_ADDRESSES'].split(" ")[0]
-        user = self.model.config['juju_controller_user']
-        password = self.model.config['juju_controller_password']
-        cacert = self.model.config['juju_controller_cacert']
+            addr = os.environ["JUJU_API_ADDRESSES"].split(" ")[0]
+        user = self.model.config["juju_controller_user"]
+        password = self.model.config["juju_controller_password"]
+        cacert = self.model.config["juju_controller_cacert"]
 
-        return not (len(addr) == 0 or len(user) == 0 or len(password) == 0 or
-                len(cacert) == 0)
- 
+        return not (
+            len(addr) == 0 or len(user) == 0 or len(password) == 0 or len(cacert) == 0
+        )
+
     def connected(f):
         async def wrapper(*args):
             ctrl, model = await args[0].connect_juju_components()
