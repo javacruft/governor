@@ -47,6 +47,8 @@ class GovernorEventHandler(Object):
         event_switcher = {
             "unit_added": self.on.unit_added.emit,
             "unit_removed": self.on.unit_removed.emit,
+            "unit_blocked": self.on.unit_blocked.emit,
+            "unit_error": self.on.unit_error.emit,
         }
 
         func = event_switcher.get(

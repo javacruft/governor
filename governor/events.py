@@ -26,8 +26,18 @@ class UnitRemovedEvent(UnitEvent):
     """ Unit Removed Event. """
 
 
+class UnitBlockedEvent(UnitEvent):
+    """ Unit Removed Event. """
+
+
+class UnitErrorEvent(UnitEvent):
+    """ Unit Removed Event. """
+
+
 class GovernorEvents(ObjectEvents):
     """ Object Events class for all GovernorEvents. """
 
     unit_added = EventSource(UnitAddedEvent)
     unit_removed = EventSource(UnitRemovedEvent)
+    unit_blocked = EventSource(UnitBlockedEvent)
+    unit_error = EventSource(UnitErrorEvent)
