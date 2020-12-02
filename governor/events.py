@@ -27,11 +27,11 @@ class UnitRemovedEvent(UnitEvent):
 
 
 class UnitBlockedEvent(UnitEvent):
-    """ Unit Removed Event. """
+    """ Unit Blocked Event. """
 
 
 class UnitErrorEvent(UnitEvent):
-    """ Unit Removed Event. """
+    """ Unit Error Event. """
 
 
 class GovernorEvents(ObjectEvents):
