@@ -5,6 +5,9 @@
 import os
 import subprocess
 import yaml
+import logging
+import sqlite3
+from time import sleep
 
 from .juju_wrapper import JujuConnection
 from ops.charm import CharmBase
@@ -33,11 +36,24 @@ class GovernorEventHandler(Object):
 
     def on_governor_event_action(self, event):
         """ React to action and start Processing Governor Events. """
-        self.process_governor_events()
+        self.process_governor_events(event)
 
-    def process_governor_events(self):
+    def process_governor_events(self, event):
         """ Read Events from Storage. """
-        events_data = self.storage.read_all_event_data()
+        retries = 0
+
+        while retries < 3:
+            try:
+                events_data = self.storage.read_all_event_data()
+                break
+            except sqlite3.OperationalError:
+                logging.warning("Waiting for DB to unlock")
+                sleep(3)
+                retries += 1
+        else:
+            logging.warning("Unable to load Events, Deferring Action.")
+            event.defer()
+            return
 
         for event_data in events_data:
             self.emit_governor_event(event_data)
