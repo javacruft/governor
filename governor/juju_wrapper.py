@@ -31,6 +31,15 @@ class JujuConnection:
 
         self.model = await self.ctrl.get_model(model)
 
+    def get_cloud_type(self):
+        return loop.run(self._get_cloud_type())
+
+    async def _get_cloud_type(self):
+        status = await self.model.get_status()
+        cloud_tag = status["model"].cloud_tag
+        cloud = await self.ctrl.cloud(cloud_tag)
+        return cloud["cloud"].type_
+
     def set_config(self, app_name, **kwargs):
         """ Call application.set_config. """
         application = self.model.applications[app_name]
