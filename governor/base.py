@@ -24,14 +24,12 @@ class GovernorEventHandler(Object):
     from Governor Storage and emmiting correct Governor Event.
     """
 
-    on = GovernorEvents()
-
     def __init__(self, charm, name):
         super().__init__(charm, name)
-        events = charm.on
+        self.events = charm.on
         self.storage = GovernorStorage("/var/snap/governor-broker/common/gs_db")
         self.framework.observe(
-            events.governor_event_action, self.on_governor_event_action
+            self.events.governor_event_action, self.on_governor_event_action
         )
 
     def on_governor_event_action(self, event):
@@ -61,10 +59,10 @@ class GovernorEventHandler(Object):
     def emit_governor_event(self, event_data):
         """ Map event data to governor events and emit it. """
         event_switcher = {
-            "unit_added": self.on.unit_added.emit,
-            "unit_removed": self.on.unit_removed.emit,
-            "unit_blocked": self.on.unit_blocked.emit,
-            "unit_error": self.on.unit_error.emit,
+            "unit_added": self.events.unit_added.emit,
+            "unit_removed": self.events.unit_removed.emit,
+            "unit_blocked": self.events.unit_blocked.emit,
+            "unit_error": self.events.unit_error.emit,
         }
 
         func = event_switcher.get(
@@ -82,13 +80,15 @@ class GovernorBase(CharmBase):
     """
 
     state = StoredState()
+    on = GovernorEvents()
 
     def __init__(self, *args):
         super().__init__(*args)
+
         if not os.path.isdir("/var/snap/governor-broker/common"):
             os.makedirs("/var/snap/governor-broker/common")
 
-        self.geh = GovernorEventHandler(self, "geh")
+        self.governor_events = GovernorEventHandler(self, "governor_events")
 
         model_name = os.environ["JUJU_MODEL_NAME"] or None
         if model_name is None:

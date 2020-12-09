@@ -1,4 +1,4 @@
-from ops.charm import EventBase, ObjectEvents, EventSource
+from ops.charm import EventBase, CharmEvents, EventSource
 
 
 class UnitEvent(EventBase):
@@ -34,7 +34,7 @@ class UnitErrorEvent(UnitEvent):
     """ Unit Error Event. """
 
 
-class GovernorEvents(ObjectEvents):
+class GovernorEvents(CharmEvents):
     """ Object Events class for all GovernorEvents. """
 
     unit_added = EventSource(UnitAddedEvent)
