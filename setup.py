@@ -12,7 +12,7 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/DomFleischmann/governor",
-    packages=setuptools.find_packages(),
+    packages=["governor"],
     install_requires=[
         'juju',
         'ops',

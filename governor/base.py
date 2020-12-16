@@ -9,11 +9,12 @@ import logging
 import sqlite3
 from time import sleep
 
-from .juju_wrapper import JujuConnection
+from governor.juju_wrapper import JujuConnection
 from ops.charm import CharmBase
+from ops.model import BlockedStatus
 from ops.framework import StoredState, Object
-from .storage import GovernorStorage
-from .events import GovernorEvents
+from governor.storage import GovernorStorage
+from governor.events import GovernorEvents
 
 
 class GovernorEventHandler(Object):
@@ -90,7 +91,7 @@ class GovernorBase(CharmBase):
 
         self.governor_events = GovernorEventHandler(self, "governor_events")
 
-        model_name = os.environ["JUJU_MODEL_NAME"] or None
+        model_name = self.model.name
         if model_name is None:
             raise Exception("Failed to find model {}".format(model_name))
 
@@ -105,6 +106,8 @@ class GovernorBase(CharmBase):
                 self.state.model_name,
             )
         else:
+            self.model.unit.status = BlockedStatus(
+                'Missing Juju controller configuration')
             self.juju = None
 
     def start_governord(self):
@@ -128,8 +131,6 @@ class GovernorBase(CharmBase):
     def creds_available(self):
         """ Check if Juju credentials are available. """
         addr = self.model.config["juju_controller_address"]
-        if len(addr) == 0:
-            addr = os.environ["JUJU_API_ADDRESSES"].split(" ")[0]
         user = self.model.config["juju_controller_user"]
         password = self.model.config["juju_controller_password"]
         cacert = self.model.config["juju_controller_cacert"]

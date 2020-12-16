@@ -52,17 +52,12 @@ class JujuConnection:
 
     async def _execute_action(self, application_name, action_name, **kwargs):
         """ Execute Action on Leader unit of Application name. """
-        if (
-            not self.model.applications
-            and application_name not in self.model.applications
-        ):
-            return
-
         application = self.model.applications[application_name]
 
         for u in application.units:
             if await u.is_leader_from_status():
                 unit = u
+                break
 
         await unit.run_action(action_name, **kwargs)
 
