@@ -66,13 +66,14 @@ class JujuConnection:
         loop.run(self.model.deploy(**kwargs))
 
     def wait_for_deployment_to_settle(
-        self, charm_name, allowed_workload_status=["active"]
+        self, charm_name, allowed_workload_status=["active"], timeout=320
     ):
         """ Wait for deployment to settle synchronously. """
-        loop.run(self._wait_for_deployment_to_settle(charm_name, allowed_workload_status))
+        loop.run(self._wait_for_deployment_to_settle(
+            charm_name, allowed_workload_status, timeout))
 
     async def _wait_for_deployment_to_settle(
-        self, charm_name, allowed_workload_status=["active"]
+        self, charm_name, allowed_workload_status=["active"], timeout=320
     ):
         """
         Wait for deployment to settle to allowed workload status and ignore status of
@@ -91,7 +92,7 @@ class JujuConnection:
                     for application in filtered_apps
                     for unit in application.units
                 ),
-                timeout=320,
+                timeout=timeout,
             )
         except asyncio.TimeoutError:
             raise ModelError("Timed out while waiting for deployment to finish")
