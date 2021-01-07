@@ -69,7 +69,7 @@ class JujuConnection:
         self, charm_name, allowed_workload_status=["active"]
     ):
         """ Wait for deployment to settle synchronously. """
-        loop.run(self._wait_for_deployment_to_settle(charm_name))
+        loop.run(self._wait_for_deployment_to_settle(charm_name, allowed_workload_status))
 
     async def _wait_for_deployment_to_settle(
         self, charm_name, allowed_workload_status=["active"]
