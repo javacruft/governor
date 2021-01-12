@@ -51,7 +51,6 @@ class GovernorEventHandler(Object):
                 retries += 1
         else:
             logging.warning("Unable to load Events, Deferring Action.")
-            event.defer()
             return
 
         for event_data in events_data:
