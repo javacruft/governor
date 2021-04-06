@@ -46,6 +46,11 @@ class JujuConnection:
 
         loop.run(application.set_config(**kwargs))
 
+    def get_config(self, app_name):
+        """ Return the configuration for the given application. """
+        application = self.model.applications[app_name]
+        return loop.run(application.get_config())
+
     def execute_action(self, application_name, action_name, **kwargs):
         """ Execute Action synchronously. """
         loop.run(self._execute_action(application_name, action_name, **kwargs))
