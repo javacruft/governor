@@ -65,6 +65,18 @@ class JujuConnection:
         """ Call model.deploy. """
         loop.run(self.model.deploy(**kwargs))
 
+    def add_relation(self, rel1, rel2):
+        """ Adds a new relation to the model """
+        loop.run(self.model.add_relation(rel1, rel2))
+
+    async def _add_machine(self, **kwargs):
+        machine = await self.model.add_machine(**kwargs)
+        return machine.id
+
+    def add_machine(self, **kwargs):
+        """ Adds a new machine to the model. Returns the machine id. """
+        return loop.run(self._add_machine(**kwargs))
+
     def wait_for_deployment_to_settle(
         self, charm_name, allowed_workload_status=["active"]
     ):

@@ -69,6 +69,23 @@ class JujuWrapperTestCase(TestCase):
         self.juju.deploy(**kwargs)
         deploy_mock.assert_called_with(**kwargs)
 
+    @patch("juju.model.Model.add_relation")
+    def test_add_relation(self, model_mock):
+        self.juju.add_relation("foo", "bar")
+        model_mock.assert_called_with("foo", "bar")
+
+    @patch("juju.model.Model.add_machine")
+    def test_add_machine(self, model_mock):
+        class AddMachineResult:
+            id = "1"
+
+        model_mock.return_value = AddMachineResult()
+
+        kwargs = {"foo": "bar"}
+        id = self.juju.add_machine(**kwargs)
+        model_mock.assert_called_with(**kwargs)
+        assert id == "1"
+
     @patch("juju.model.Model.block_until")
     @patch("juju.model.Model.connection")
     def test_wait_for_deployment_to_settle(self, block_mock, connection_mock):
