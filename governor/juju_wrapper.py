@@ -52,13 +52,7 @@ class JujuConnection:
 
     async def _execute_action(self, application_name, action_name, **kwargs):
         """ Execute Action on Leader unit of Application name. """
-        application = self.model.applications[application_name]
-
-        for u in application.units:
-            if await u.is_leader_from_status():
-                unit = u
-                break
-
+        unit = await self._get_leader_unit(application_name)
         await unit.run_action(action_name, **kwargs)
 
     def deploy(self, **kwargs):
@@ -76,6 +70,17 @@ class JujuConnection:
     def add_machine(self, **kwargs):
         """ Adds a new machine to the model. Returns the machine id. """
         return loop.run(self._add_machine(**kwargs))
+
+    async def _get_leader_unit(self, app_name):
+        app = self.model.applications[app_name]
+        for u in app.units:
+            if await u.is_leader_from_status():
+                return u
+        return None
+
+    def get_leader_unit(self, app_name):
+        """ Returns the leader unit of the given application. """
+        return loop.run(self._get_leader_unit(app_name))
 
     def wait_for_deployment_to_settle(
         self, charm_name, allowed_workload_status=["active"], timeout=320
