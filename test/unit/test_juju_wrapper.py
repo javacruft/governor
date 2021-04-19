@@ -47,6 +47,17 @@ class JujuWrapperTestCase(TestCase):
             set_config_mock.assert_called_with(config=test_config)
 
     @patch("juju.model.Model.connection")
+    @patch("juju.application.Application.get_config")
+    def test_get_config(self, get_config_mock, model_connection_mock):
+        test_config = {"key": "value"}
+        with patch.object(Model, "applications", new_callable=PropertyMock) as app_mock:
+            app_mock.return_value = {"test_app": Application("app", self.juju.model)}
+            get_config_mock.return_value = test_config
+            config = self.juju.get_config("test_app")
+            get_config_mock.assert_called_with()
+            assert config == test_config
+
+    @patch("juju.model.Model.connection")
     @patch("juju.unit.Unit.is_leader_from_status")
     @patch("juju.unit.Unit.run_action")
     def test_execute_action(self, action_mock, leader_mock, model_connection_mock):
@@ -85,6 +96,22 @@ class JujuWrapperTestCase(TestCase):
         id = self.juju.add_machine(**kwargs)
         model_mock.assert_called_with(**kwargs)
         assert id == "1"
+
+    @patch("juju.model.Model.connection")
+    @patch("juju.unit.Unit.is_leader_from_status")
+    def test_get_leader_unit(self, leader_mock, model_connection_mock):
+        leader_mock.return_value = True
+        with patch.object(Model, "applications", new_callable=PropertyMock) as app_mock:
+            app_mock.return_value = {"test_app": Application("app", self.juju.model)}
+            with patch.object(
+                Application, "units", new_callable=PropertyMock
+            ) as unit_mock:
+                unit_mock.return_value = [
+                    Unit("unit1", self.juju.model),
+                    Unit("unit2", self.juju.model),
+                ]
+                self.juju.get_leader_unit("test_app")
+                leader_mock.assert_called_with()
 
     @patch("juju.model.Model.block_until")
     @patch("juju.model.Model.connection")
