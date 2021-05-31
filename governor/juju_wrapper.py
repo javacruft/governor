@@ -118,3 +118,10 @@ class JujuConnection:
             )
         except asyncio.TimeoutError:
             raise ModelError("Timed out while waiting for deployment to finish")
+
+    async def _upgrade_application(self, app_name, **kwargs):
+        app = self.model.applications[app_name]
+        await app.upgrade_charm(**kwargs)
+
+    def upgrade_application(self, app_name, **kwargs):
+        loop.run(self._upgrade_application(app_name, **kwargs))
