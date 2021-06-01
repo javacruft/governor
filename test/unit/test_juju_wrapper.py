@@ -144,3 +144,11 @@ class JujuWrapperTestCase(TestCase):
                 ),
                 timeout=320,
             )
+
+    @patch("juju.model.Model.connection")
+    @patch("juju.application.Application.upgrade_charm")
+    def test_upgrade_application(self, upgrade_charm_mock, connection_mock):
+        with patch.object(Model, "applications", new_callable=PropertyMock) as app_mock:
+            app_mock.return_value = {"test_app": Application("app", self.juju.model)}
+            self.juju.upgrade_application('test_app', revision=1)
+            upgrade_charm_mock.assert_called_with(revision=1)
