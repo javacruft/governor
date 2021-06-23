@@ -40,6 +40,13 @@ class JujuConnection:
         cloud = await self.ctrl.cloud(cloud_tag)
         return cloud["cloud"].type_
 
+    def switch_model(self, model):
+        loop.run(self._switch_model(model))
+
+    async def _switch_model(self, model):
+        """ Switch the current model focus. """
+        self.model = await self.ctrl.get_model(model)
+
     def set_config(self, app_name, **kwargs):
         """ Call application.set_config. """
         application = self.model.applications[app_name]
@@ -86,6 +93,10 @@ class JujuConnection:
     def get_leader_unit(self, app_name):
         """ Returns the leader unit of the given application. """
         return loop.run(self._get_leader_unit(app_name))
+
+    def get_application(self, app_name):
+        """ Returns the full application for the given application. """
+        return self.model.applications[app_name]
 
     def wait_for_deployment_to_settle(
         self, charm_name, allowed_workload_status=["active"], timeout=320
